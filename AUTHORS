@@ -1,0 +1,30 @@
+DGen was originally written by Dave <dave@dtmnt.com>. It was ported to SDL by
+Joe Groff <joe@pknet.com> and Phil K. Hornung <falcon@pknet.com>.
+
+The following people have also made contributions to DGen:
+
+Andrew Bazan <abazan@mailbag.com>
+  - Got DGen/SDL to run under BeOS.
+Steve Snake <snake@toodarkpark.freeserve.co.uk>
+  - The author of the best DOS emulator KGen, was also very patient with my
+    stupid questions about the Genesis, thus allowing me to fix little
+    emulation quirks. ;)
+Amy Lear <Amikins@operamail.net>
+  - Helped add 8-bit sound support. :)
+Daniel Wislocki <wislocki@math.grin.edu>
+  - Improved the sound engine to be nicer to higher-end systems.
+John Stiles <stiles@emulation.net>
+  - He works on the Mac port of DGen, and what a job he does! He wrote the
+    original raster engine, and also has sped things up enormously.
+Dylan Griffiths <Dylan_G@bigfoot.com>
+  - Rewrote a lot of the string-handling code to make it much less evil-looking.
+Allen Noe <psyclone42@geocities.com>
+  - Added screenshot functionality.
+Jeff Grady <jgrady@chimera.acm.jhu.edu>
+  - Fixed compilation problems with gcc snapshots.
+Cameron Moore <cameron@unbeatenpath.net>
+  - Fixed SDL joystick initialization problems.
+Daniel Robbins <drobbins@gentoo.org>
+  - Helped fix timing problems on very fast machines.
+Andre Souza <asouza@olinux.com.br>
+  - Added OpenGL rendering mode.

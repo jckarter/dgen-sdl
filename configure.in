@@ -1,0 +1,310 @@
+dnl DGen/SDL v1.22
+dnl At long last, the configure script!
+
+AC_INIT(decode.c)
+
+dnl We'll need machine type later
+AC_CANONICAL_SYSTEM
+machtype=$target_cpu
+
+AM_INIT_AUTOMAKE(dgen-sdl, 1.23)
+
+dnl Before we check for cc and c++, check for the --with-extra-opt switch, so
+dnl we can add the optimizations.
+AC_ARG_WITH(extra-opt,
+	    [  --with-extra-opt        Add extra optimizations (egcs/GCC >= 2.95 only)],
+	    ADD_OPT=$withval,
+	    ADD_OPT=no)
+
+if test x$ADD_OPT \!= xno; then
+	case $machtype in
+	i?86)
+		CFLAGS="$CFLAGS -O3 -mpentium -march=pentium -fstrength-reduce -fomit-frame-pointer -frerun-cse-after-loop -funroll-loops -ffast-math -malign-functions=5 -malign-jumps=5 -malign-loops=5 -malign-double -fno-exceptions -fno-rtti"
+		CXXFLAGS="$CXXFLAGS -O3 -mpentium -march=pentium -fstrength-reduce -fomit-frame-pointer -frerun-cse-after-loop -funroll-loops -ffast-math -malign-functions=5 -malign-jumps=5 -malign-loops=5 -malign-double -fno-exceptions -fno-rtti"
+		;;
+	*)
+		CFLAGS="$CFLAGS -O3 -ffast-math -fomit-frame-pointer -fno-exceptions -fno-rtti -funroll-loops -frerun-cse-after-loop"
+		CXXFLAGS="$CXXFLAGS -O3 -ffast-math -fomit-frame-pointer -fno-exceptions -fno-rtti -funroll-loops -frerun-cse-after-loop"
+		;;
+	esac
+fi
+
+dnl Check for standard programs
+AC_PROG_AWK
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_CXX
+AC_PROG_CXXCPP
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_RANLIB
+
+dnl Set the value of make, if make doesn't already
+AC_PROG_MAKE_SET
+
+dnl We're using C
+AC_LANG_C
+
+dnl Check endianness
+AC_C_BIGENDIAN
+
+dnl Check for SDL libs
+AM_PATH_SDL(1.0.0, true, AC_MSG_ERROR([*** SDL version >= 1.0.0 not found.]))
+
+CFLAGS="$CFLAGS $SDL_CFLAGS"
+CXXFLAGS="$CXXFLAGS $SDL_CFLAGS"
+INTERFACE=sdl
+
+dnl Add SDL cflags to CPPFLAGS, just to check for SDL_joystick header
+OLD_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $SDL_CFLAGS"
+
+EXTRAOBJS=
+
+dnl Check for SDL joystick
+JOYSTICK_SUPPORT=no
+AC_CHECK_HEADER(SDL_joystick.h, JOYSTICK_SUPPORT=SDL,
+	dnl Check for Linux joystick as a backup
+	AC_CHECK_HEADER(linux/joystick.h, JOYSTICK_SUPPORT=LINUX))
+
+dnl Check for X (so we can find the OpenGL headers)
+AC_PATH_XTRA
+CFLAGS="$CFLAGS $X_CFLAGS"
+CXXFLAGS="$CXXFLAGS $X_CFLAGS"
+LIBS="$LIBS $X_LIBS"
+
+dnl Check for OpenGL support in SDL
+AC_ARG_WITH(opengl,
+	    [  --without-opengl        Don't use SDL OpenGL support],
+	    OPENGL_SUPPORT=$withval, OPENGL_SUPPORT=yes)
+if test x$OPENGL_SUPPORT \!= xno; then
+  AC_MSG_CHECKING([for OpenGL support in SDL])
+  AC_TRY_COMPILE([#include <SDL.h>], [int foo() { int x = SDL_OPENGL; }],
+	         OPENGL_SUPPORT=yes, OPENGL_SUPPORT=no)
+  AC_MSG_RESULT($OPENGL_SUPPORT)
+  # Check for the GL libs
+  if test x$OPENGL_SUPPORT \!= xno; then
+    oldCPPFLAGS=$CPPFLAGS
+    oldLIBS=$LIBS
+    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+    LIBS="$LIBS $SDL_LIBS"
+    AC_CHECK_LIB(GL, glBegin,
+      AC_CHECK_HEADER(GL/gl.h, , OPENGL_SUPPORT=no),
+      OPENGL_SUPPORT=no
+    )
+    LIBS=$oldLIBS
+    CPPFLAGS=$oldCPPFLAGS
+  fi
+
+fi
+
+if test x$OPENGL_SUPPORT \!= xno; then
+  AC_DEFINE(SDL_OPENGL_SUPPORT)
+  SDL_LIBS="$SDL_LIBS -lGL"
+fi
+
+CPPFLAGS=$OLD_CPPFLAGS
+
+if test x$JOYSTICK_SUPPORT \!= xno; then
+	AC_DEFINE(JOYSTICK_SUPPORT)
+	AC_DEFINE_UNQUOTED(${JOYSTICK_SUPPORT}_JOYSTICK_SUPPORT)
+	EXTRAOBJS="$EXTRAOBJS md-phil.o"
+fi
+
+oldLIBS=$LIBS
+LIBS="$LIBS $SDL_LIBS"
+dnl Check for the SDL_WM_ToggleFullScreen function
+AC_CHECK_FUNCS(SDL_WM_ToggleFullScreen)
+LIBS=$oldLIBS
+
+dnl Check for an Intel chip
+AC_MSG_CHECKING([for x86 processor])
+case $machtype in
+i?86|BePC)
+	AC_MSG_RESULT([yes])
+	dnl Check if the user explicitly asked to not use nasm
+	AC_ARG_WITH(nasm,
+	            [  --without-nasm          Don't use NASM for assembler routines],
+		    USENASM=$withval,
+		    USENASM=yes)
+	if test x$USENASM \!= xno; then
+		dnl Check for NASM
+		AC_CHECK_PROG(NASM, nasm, nasm, [not found])
+		if test x$NASM \!= "xnot found"; then
+			dnl Find NASM object format
+			AC_MSG_CHECKING([for NASM object format])
+			cat >___DgSdFmTTeSt.asm <<EOF
+bits 32
+section .text
+global main
+global _main
+global main_
+main:
+_main:
+main_:
+	ret
+EOF
+			test -z $NASM_FMT &&
+			for FMT in elf aout aoutb coff; do
+				$NASM -f $FMT ___DgSdFmTTeSt.asm
+				if $CC -o ___DgSdFmTTeSt ___DgSdFmTTeSt.o >&5
+				then
+					NASM_FMT=$FMT
+					break
+				fi
+			done
+			rm ___DgSdFmTTeSt*
+			if test \! -z "$NASM_FMT"; then
+				AC_MSG_RESULT([$NASM_FMT])
+				ASM=true
+
+				dnl ELF doesn't use underscores, aout&coff do
+				if test x$NASM_FMT = xelf; then
+changequote(<<,>>)
+					CHOP_="sed -e '/^_/s/^_//' -e '/_/s/\([][,.+ 	*:-]\)_/\1/g'"
+changequote([,])
+				else
+					CHOP_=cat
+				fi
+				AM_CONDITIONAL(NO_USCORE,
+					       test x$NASM_FMT = xelf)
+
+				dnl Check for MMX
+				AC_ARG_WITH(mmx,
+					    [  --without-mmx           Don't use MMX routines, even if supported],
+					    USEMMX=$withval,
+					    USEMMX=yes)
+				AC_MSG_CHECKING([for MMX])
+				cat >___DgSdMmXTeSt.asm <<EOF
+bits 32
+section .text
+global main
+global _main
+global main_
+main:
+_main:
+main_:
+	emms
+	xor eax, eax	; Return value of 0
+	ret
+EOF
+				$NASM -f $NASM_FMT ___DgSdMmXTeSt.asm
+				$CC -o ___DgSdMmXTeSt ___DgSdMmXTeSt.o >&5
+				./___DgSdMmXTeSt
+				MMXE=$?
+				rm ___DgSdMmXTeSt*
+				if test x$USEMMX \!= xno -a x$MMXE = x0; then
+					MMX=true
+					AC_MSG_RESULT([yes])
+				else
+					MMX=false
+					AC_MSG_RESULT([no])
+				fi
+			else
+				AC_MSG_RESULT([not found])
+				ASM=false
+				MMX=false
+			fi
+		else
+			ASM=false
+			MMX=false
+		fi
+	else
+		ASM=false
+		MMX=false
+	fi
+	if test x$ASM = xfalse; then
+		AC_MSG_ERROR([
+*** NASM is necessary on x86 platforms for assembler optimizations.
+*** A package most likely came with your Unix distribution, but if one didn't,
+*** it can be found at http://www.web-sites.co.uk/nasm/ (or at
+*** http://www.bebits.com/ for BeOS)
+		])
+	fi
+	;;
+*)
+	AC_MSG_RESULT([no])
+	ASM=false
+	MMX=false
+	;;
+esac
+
+
+dnl We are free to use assembler! :)
+if $ASM; then
+	EXTRAOBJS="$EXTRAOBJS asm_tiles.o ctv.o"
+	AC_DEFINE(ASM_TILES)
+	AC_DEFINE(ASM_CTV)
+	if $MMX; then
+		EXTRAOBJS="$EXTRAOBJS mmx_memcpy.o"
+		AC_DEFINE(MMX)
+		AC_DEFINE(memcpy, mmx_memcpy)
+	else
+		EXTRAOBJS="$EXTRAOBJS asm_memcpy.o"
+		AC_DEFINE(memcpy, asm_memcpy)
+	fi
+	if test -f mz80/makez80.c; then
+		CPUDIRS=mz80
+		MZ80="mz80/mz80.o"
+	fi
+fi
+
+dnl Use ZZ80 if MZ80 isn't here
+AC_MSG_CHECKING([whether MZ80 is available])
+if test -z "$MZ80"; then
+	AC_MSG_RESULT([no])
+	EXTRAOBJS="$EXTRAOBJS zz80.o"
+else
+	AC_MSG_RESULT([yes])
+fi
+
+dnl Figure out what emus we're using (StarScream, Musashi, or both)
+AC_ARG_WITH(star,
+	    [  --without-star          Don't use StarScream assembler CPU core if available], 
+	    USESTAR=$withval, USESTAR=yes)
+AC_ARG_WITH(musa,
+	    [  --without-musa          Don't use Musashi C CPU core], 
+	    USEMUSA=$withval, USEMUSA=yes)
+
+AC_MSG_CHECKING([whether StarScream is available])
+if test x$ASM = xfalse -o \! -f star/star.c -o x$USESTAR = xno; then
+	AC_MSG_RESULT([no])
+	dnl We have to use musa
+	if test x$USEMUSA = xno; then
+		AC_MSG_ERROR([*** You have disabled both CPU cores. You need at least one.])
+	fi
+	CPUDIRS="$CPUDIRS musa"
+	MUSA="-Lmusa -lmusa68"
+	AC_DEFINE(COMPILE_WITH_MUSA)
+else
+	AC_MSG_RESULT([yes])
+	if test x$USEMUSA \!= xno; then
+		CPUDIRS="$CPUDIRS musa"
+		MUSA="-Lmusa -lmusa68"
+		AC_DEFINE(COMPILE_WITH_MUSA)
+	fi
+	CPUDIRS="$CPUDIRS star"
+	STAR="star/starcpu.o"
+	AC_DEFINE(COMPILE_WITH_STAR)
+fi
+
+dnl Output variables
+AC_SUBST(INTERFACE)
+AC_SUBST(NASM)
+AC_SUBST(NASM_FMT)
+AC_SUBST(CHOP_)
+AC_SUBST(CPUDIRS)
+AC_SUBST(MUSA)
+AC_SUBST(STAR)
+AC_SUBST(MZ80)
+AC_SUBST(EXTRAOBJS)
+
+dnl Done!
+AC_OUTPUT([
+	Makefile
+	star/Makefile
+	musa/Makefile
+	mz80/Makefile
+	sdl/Makefile
+])
+

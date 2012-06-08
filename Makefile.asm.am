@@ -1,0 +1,11 @@
+# Tell how to make assembler files
+SUFFIXES += .asmu .asm
+
+.asm.o:
+	@NASM@ -f @NASM_FMT@ $<
+
+.asmu.o:
+	@@CHOP_@ $< > .$<
+	@NASM@ -f @NASM_FMT@ -o $@ .$<
+	@rm -f .$<
+

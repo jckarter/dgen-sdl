@@ -1,0 +1,107 @@
+
+--------------------------------------------------------------------------------
+WHAT'S NEW?
+--------------------------------------------------------------------------------
+
+v1.23 <- v1.22
+ * Added fullscreen toggle, using Alt-Enter by default.
+ * Added the ability to set modifiers on key bindings, using the prefixes
+   "shift-", "ctrl-", "alt-", and "meta-".
+ * When 'z' is pressed to stop emulation while running fullscreen, the screen
+   is toggled into windowed mode until emulation resumes. (assuming SDL
+   supports this on your platform)
+ * Fixed some buffer overflows in the rc parser.
+ - Fixed a minor bug in creating the .dgen directory framework upon first run.
+ * NASM is now required on x86 platforms.
+ - Fixed a possible problem in the configure script detecting NASM object
+   format on non-ELF platforms.
+
+v1.22 <- v1.21
+ * Fixed save RAM problems with some games that did not properly switch save
+   RAM on/off, such as Shadowrun and Shining Force.
+ * Fixed SDL joystick code, thanks to Cameron Moore <cameron@unbeatenpath.net>.
+ * Fixed timing problems on FreeBSD and on very fast machines when playing with
+   sound. If you use FreeBSD, I suggest updating to the latest 4-STABLE
+   snapshot and rebuilding your kernel to get the best sound sync.
+ * Added OpenGL rendering mode, thanks to Andre Souza <asouza@olinux.com.br>.
+   See the '-G' option in the dgen(1) manpage or 'bool_opengl' in dgenrc(5)
+   in order to activate it.
+ * Added 'bool_fullscreen', 'int_scale', 'bool_opengl', 'int_opengl_width',
+   and 'int_opengl_height' dgenrc fields, in order to allow fullscreen,
+   scaling, and OpenGL preferences to be set permanently in dgenrc.
+
+v1.21 <- v1.20a
+ * Screenshot code added, courtesy of Allen Noe <psyclone42@geocities.com>.
+   The key_screenshot field in dgenrc sets the key that will make screenshots
+   happen. Its default is F12.
+ * MZ80 core updated to version 3.4. Sound in Aladdin and the Sonic games should
+   run at the correct speed now.
+ * Fixed a bug in the handling of handling saved state and RAM filenames, which
+   would result in saved state files being saved with a null filename.
+ - Added a '-s' switch, which will load the given saved state at startup.
+ * Added support for joystick through SDL for SDL 1.1.x.
+ - Fixed compilation problems with the gcc "2.96" on Redhat 7.x systems. Thanks
+   to Jeff Grady <jgrady@chimera.acm.jhu.edu>.
+
+v1.20a <- 1.20
+ - Fixed a tiny problem that caused MMX to be improperly detected on some Linux
+   boxes.
+
+v1.20 <- 1.18
+ * DGen now uses autoconf/automake, so compiling DGen is now as easy as
+   './configure && make && make install'.
+   Because of this, though, you'll need to upgrade SDL to v1.0.1.
+   The new Autoconf scripts are still a bit experimental; if it seems broken
+   on your platform, try to fix it and send a patch.
+ - I rewrote and reorganized documentation to better fit the way Automake likes
+   to do things.
+ * Manpages are now available, for dgen(1) and dgenrc(5).
+ * If the normal window size is too small for you, you can now scale the window
+   with the new -X and -Y options.
+
+v1.19 <- v1.18
+ - $%&($! Nothing was working!
+
+v1.18 <- v1.17
+ * Enormous speed increase, thanks to the hard work of John Stiles, who also
+   has put all interrupt bugs to rest, finally.
+ * DGen works in FreeBSD! The included Makefile.config.FreeBSD should work
+   without modifications. You need the GNU make and EGCS ports, though.
+ * Demo record/play! You can record a demo of yourself playing a game with the
+   '-d DEMONAME' switch, i.e. "dgen -d foo.demo my_rom.smd". Then play it back
+   later with "dgen -D foo.demo my_rom.smd". Also, no verifaction checks are
+   done on the demos, so you can feed it arbitrary files and see what happens,
+   if you like. :)
+
+v1.17 <- v1.16
+ * Save RAM implementation has been overhauled, so now games with overlapping
+   ROM and save RAM (like Phantasy Star IV and Sonic 3 + Knuckles) can save
+   games correctly. Many thanks to Steve Snake for helping me make this work
+   right.
+ * Crude PAL mode support, give the '-P' option to use it. Doesn't work very
+   well yet.
+ - I made some changes that should (hopefully) make DGen run properly on
+   big-endian platforms, but I don't have any way of testing it. If you have
+   a PowerPC, SPARC, or other big-endian system, give it a try and help me
+   iron out the wrinkles. :)
+ * Window is now emulated properly, so Herzog Zwei split-screen and other
+   little bugs should be fixed. Thanks again to Steve.
+ - A little bug that caused SDL to complain about not being able to
+   initialize sound, even if bool_sound was false in dgenrc, was fixed. This
+   should help all you folks without sound cards.
+ * Assembler tile rendering is now in place for the new raster effect engine.
+   A small but noticeable speed increase. :) [PKH]
+ * All the SDL-dependent stuff has been separated into the sdl/ directory,
+   and I wrote a little platform-dependent (pd) API so you can attach an
+   interface for your favorite Unix-like operating system and toolkit. :)
+   If you want to do a port to BeOS, MacOS X, QNX, etc. this should make your
+   life easier. I also hope to have raw Xlib and SVGAlib interfaces to replace
+   SDL, and thus require one less thing to download. :)
+ - Improved sound writing method, by Daniel Wislocki <wislocki@math.grin.edu>.
+   He says this improves flaky sound in 44kHz, and also fixes the problem of
+   the emulator being too fast. I have a very slow computer, so I have to take
+   his word for it. ;)
+ - I also removed most of the messages dgen makes (except for errors), so that
+   it is quieter. If you liked having all those messages, tell me and I'll put
+   them back in. ;)
+ 

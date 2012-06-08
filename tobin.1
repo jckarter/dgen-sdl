@@ -1,0 +1,30 @@
+.Dd February 21, 2001
+.Dt DGEN 1
+.Sh NAME
+.Nm tobin
+.Nd Convert SMD-format Genesis/Megadrive image to raw (BIN) format
+.Sh SYNOPSIS
+.Nm tobin
+.Ar FROMSMD
+.Ar TOBIN
+.Sh DESCRIPTION
+The ROM image
+.Ar FROMSMD
+is converted into a raw image, as seen by the Genesis/MegaDrive console itself.
+The raw image is written into
+.Ar TOBIN .
+Technically,
+.Ar FROMSMD
+does not have to be an SMD file; it can be any format dgen(1) can comprehend,
+such as an image compressed with
+.Xr gzip 1 ,
+.Xr zip 1 , or
+.Xr bzip2 1 .
+.Sh SEE ALSO
+.Xr dgen 1
+.Sh AUTHORS
+This manual page was written by
+.An Joe Groff Aq joe@pknet.com .
+.Sh BUGS
+None (yet :-)
+

@@ -1,0 +1,242 @@
+.Dd February 21, 2001
+.Dt DGENRC 5
+.Os
+.Sh NAME
+.Nm dgenrc
+.Nd file containing settings for
+.Xr dgen 1
+.Sh SYNOPSIS
+$HOME/.dgen/dgenrc
+.Sh DESCRIPTION
+The file
+.Pa $HOME/.dgen/dgenrc
+is parsed by
+.Xr dgen 1
+when the emuator is started. It is used to set controller keys, as well as other
+characteristics of the emulation. The contents of this file may be overriden
+with the contents of another similarly-formatted file, via the
+.Fl r
+commandline switch.
+.Sh FILE FORMAT
+Each rc file consists of an unlimited number of lines, which each have the
+format 'fieldname = value'. A line may also be a comment, if it begins with the
+hash mark (#) character.
+.Pp
+Each
+.Ar fieldname
+is prepended by a name, which identifies the type of this field:
+.Bl -tag -width bool_*
+.It Ar key_*
+A key value. May be set to a key identifier listed in the
+.Sx KEY INDENTIFIERS
+section below.
+.It Ar bool_*
+A boolean value. "false", "no", and "0" values are taken as false, while
+"true", "yes", and any number except 0 are taken as true.
+.It Ar int_*
+An integer value, greater than or equal to 0.
+.El
+.Pp
+Some fields take special value sets, which are addressed in their respective
+sections. None of the field names or values are case-sensitive.
+.Pp
+The fields fall under a few basic groups. They are listed below, with their
+default values in brackets ([]):
+.Sh CONTROLLERS
+.Bl -tag -width xxxx
+.It key_pad1_up [up]
+.It key_pad1_down [down]
+.It key_pad1_left [left]
+.It key_pad1_right [right]
+.It key_pad1_a [a]
+.It key_pad1_b [s]
+.It key_pad1_c [d]
+.It key_pad1_x [q]
+.It key_pad1_y [w]
+.It key_pad1_z [e]
+.It key_pad1_mode [backspace]
+.It key_pad1_start [return]
+Map keys to the first Genesis controller. Each of these fields has a
+corresponding "key_pad2" field, to map to the second controller.
+.It bool_joystick [false]
+Use joysticks to emulate the controllers. Note that the keyboard keys will
+still work if this value is set. This field is only available if you have
+joystick support enabled.
+.It joypadX_bY
+Maps button number Y, on joystick X to a Genesis controller button. Valid
+button values are "a", "b", "c", "x", "y", "z", "mode", and "start". Joystick
+1 will always emulate controller 1, and joystick 2 will always emulate
+controller 2.
+.El
+.Sh AUDIO
+.Bl -tag -width xxxx
+.It bool_sound [true]
+Enable the sound subsystem.
+.It int_soundrate [22050]
+Sound frequency to play at, in hertz (Hz).
+.It bool_16bit [true]
+Use 16-bit sound. If this is false, sound will be condensed to 8-bit (which
+causes a speed penalty).
+.It int_soundsegs [8]
+Number of sound segments to use for sound buffering. Choosing a lower value will
+lower the sound latency, but may cause performance to hiccup if set too low.
+Should be a power of two from 4 to 32.
+.El
+.Sh VIDEO
+.Bl -tag -width xxxx
+.It bool_opengl [false]
+Use the OpenGL renderer, if it is available.
+.It int_opengl_width [640]
+The width of the OpenGL window to use.
+.It int_opengl_height [480]
+The height of the OpenGL window to use.
+.It bool_fullscreen [false]
+Try to run fullscreen, if possible.
+.It int_scale [1]
+Amount by which to scale the window from the default 320x240 resolution. This
+does not affect the OpenGL renderer; it only has effect if the software
+renderer is in use.
+.It key_fullscreen_toggle [alt-enter]
+Key to toggle fullscreen mode (this may do nothing if SDL doesn't support
+fullscreen toggling on your platform.)
+.El
+.Sh SAVE STATES
+.Bl -tag -width xxxx
+.It key_slot_X [X]
+Sets the current save-state slot to number X.
+.It key_save [f2]
+Saves state to the current slot.
+.It key_load [f3]
+Loads state from the current slot.
+.El
+.Sh MISCELLANEOUS KEYS
+.Bl -tag -width xxxx
+.It key_fix_checksum [f1]
+Fixes the checksum value. Some older games will freeze with a red screen if
+the ROM has been hacked or modified with Game Genie codes. If it does, pressing
+this, and resetting should fix the problem.
+.It key_quit [escape]
+Exit DGen.
+.It key_craptv_toggle [f5]
+Toggles Crap-TV image filters. So far, these filters are only available if
+DGen was compiled with the x86 assembly routines.
+.It key_reset [tab]
+Restart the Genesis emulation.
+.It key_cpu_toggle [f11]
+Switch CPU emulators. The x86 assembly CPU emulator StarScream is fast, but
+has glitches which affect a few games. Switching to the slower Musashi core
+will fix these problems, at a speed penalty.
+.It key_stop [z]
+Pause emulation, so you can concentrate on real life for a few seconds. :)
+.It key_screenshot [f12]
+Take a screenshot.
+.El
+.Sh PREFERENCES
+.Bl -tag -width xxxx
+.It bool_autoload [false]
+Automatically load the saved state from slot 0 when DGen starts.
+.It bool_autosave [false]
+Automatically save the saved state to slot 0 upon exit. Setting both of these
+fields true, you can exit DGen, and automatically start a game where you left
+off when you start it again.
+.It bool_frameskip [true]
+Automatically skip frames, when it is necessary to maintain proper emulation
+speed. This has no effect if sound is enabled, as the sound loop skips frames
+automatically to maintain constant sound speed.
+.It bool_fullscreen [false]
+Run in fullscreen mode, if it is available.
+.It int_scale [1]
+Amount by which to scale the window. Setting this to 2 will double the
+dimensions of the window, 3 will triple it, and so on. It must be a positive
+integer.
+.It bool_opengl [false]
+Use OpenGL mode to render the screen, if available.
+.It int_opengl_width [640]
+Width of the OpenGL resolution to use.
+.It int_opengl_height [480]
+Height of the OpenGL resolution to use.
+.It int_nice [0]
+If set to a non-zero value, DGen will call
+.Xr usleep 3
+with the specified parameter
+after rendering each frame. This will slow the program down (if it is running
+too fast on your computer), and allow the operating system to reclaim some
+CPU time.
+.El
+.Sh EXAMPLES
+See the file "sample.dgenrc" in the DGen/SDL distribution.
+.Sh KEY IDENTIFIERS
+A key identifier can have the prefixes "shift-", "ctrl-", "alt-" and "meta-",
+or any combination thereof, to require that the specified modifier be pressed
+in combination with the key. For example, the identifier "alt-enter" would
+correspond to holding down the Alt key while pressing Enter.
+
+The numbers "0" through "9" ("kp_0" through "kp_9" for the numeric keypad),
+letters "A" through "Z", and function keys "F1" through "F12" map to their key
+equivalents.
+In addition, the following identifiers map to their similarly-labeled key
+counterparts. Identifiers on the same line map to the same key:
+.Bd -literal -offset indent
+escape
+backspace
+tab
+capslock	caps_lock
+lshift		shift_l
+rshift		shift_r
+lctrl		ctrl_l
+lmeta		meta_l
+lalt		alt_l
+ralt		alt_r
+rmeta		meta_r
+rctrl		ctrl_r
+return		enter
+space
+
+scrollock	scroll_lock
+numlock		num_lock
+
+insert
+home
+page_up		pageup
+delete
+end
+page_down	pagedown
+left
+right
+up
+down
+
+kp_home
+kp_up
+kp_pageup	kp_page_up
+kp_left
+kp_right
+kp_end
+kp_down
+kp_pagedown	kp_page_down
+kp_insert
+kp_delete	kp_period
+
+kp_enter
+kp_divide
+kp_minus
+kp_multiply
+kp_plus
+
+`	~
+-	_
+=	+
+\	|
+[	{
+]	}
+:	;
+'	"
+,	<
+\.	>
+/	?
+
+.Sh SEE ALSO
+.Xr dgen 1
+.Sh AUTHORS
+This manual page was written by
+.An Joe Groff Aq joe@pknet.com .
